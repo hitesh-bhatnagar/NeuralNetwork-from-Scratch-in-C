@@ -7,7 +7,7 @@
 #define numHiddenNodes 2
 #define numOutputs 1
 #define numTrainingSets 4
-#define  numberOfEpochs  1000
+#define  numberOfEpochs  10000
 // simple NN that can learn XOR
 double init_weights() {
 	return ((double)rand())/((double)RAND_MAX);
@@ -111,7 +111,7 @@ int main(void){
 				outputLayer[j] =sigmoid(activation);
 			}
 
-			if (epoch % 1000 == 0 && i == 0) {
+			if (epoch % 100 == 0 && i == 0) {
                  printf("Epoch: %d | Input: %g %g | Output: %g | Target: %g\n", 
                         epoch, training_inputs[x][0], training_inputs[x][1], 
                         outputLayer[0], training_outputs[x][0]);
