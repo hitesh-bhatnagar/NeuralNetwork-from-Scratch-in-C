@@ -14,7 +14,7 @@ double init_weights() {
 }
 
 double sigmoid(double x){
-	return 1/(1+exp(-x));
+	return 1.0 / (1.0 + exp(-x));
 }
 
 double derivative(double x){
@@ -38,7 +38,7 @@ void shuffle(int *array, size_t n){
 int main(void){
 
 	srand(time(NULL));		// seed so results change every run
-	const double lr = 0.01f;
+	const double lr = 0.1f;
 
 	double hiddenLayer[numHiddenNodes];
 	double outputLayer[numOutputs];
@@ -53,31 +53,37 @@ int main(void){
 
 	double training_outputs[numTrainingSets][numOutputs] = {{0.0f}, {1.0f}, {1.0f}, {0.0f}};
 
+	// Initialize Hidden weights
 	for (int i = 0; i < numInputs; i++){
 		for(int j = 0; j < numHiddenNodes; j++){
 			hiddenWeights[i][j] = init_weights();
 		}
 	}	
 
+	// initialize output weights 
 	for (int i = 0; i < numHiddenNodes; i++){
 			for(int j = 0; j < numOutputs; j++){
-				hiddenWeights[i][j] = init_weights();
+				outputWeights[i][j] = init_weights();
 		}
 	}	
 
+	// initialize biases 
 	for(int i = 0; i < numOutputs; i++){
 		outputLayerBias[i] = init_weights();
 		
 	}
 
+	for(int i = 0; i < numHiddenNodes; i++) hiddenLayerBias[i] = init_weights();
+
 	int trainingSetOrder[] = {0,1,2,3};
 
 
 
-	// training the NN for some epochs
+	// training the NN for 1000 epochs
 
 	for(int epoch = 0; epoch < numberOfEpochs; epoch++){
 		shuffle(trainingSetOrder, numTrainingSets);
+
 		for(int i = 0; i < numTrainingSets; i++){
 			int x = trainingSetOrder[i];
 
@@ -105,7 +111,11 @@ int main(void){
 				outputLayer[j] =sigmoid(activation);
 			}
 
-			printf("Input : %g  	Output: %g		Predicted Output: %g\n", training_inputs[x][0], training_inputs[x][1], outputLayer[0], training_outputs[x][0]);
+			if (epoch % 1000 == 0 && i == 0) {
+                 printf("Epoch: %d | Input: %g %g | Output: %g | Target: %g\n", 
+                        epoch, training_inputs[x][0], training_inputs[x][1], 
+                        outputLayer[0], training_outputs[x][0]);
+            }
 
 			// BackPropagation
 			// compute change in output weights
@@ -146,47 +156,41 @@ int main(void){
 				hiddenLayerBias[j] += deltaHidden[j] * lr;
 
 				for(int k = 0; k < numInputs; k++){
-					hiddenWeights[k][j] += training_inputs[i][k] * deltaHidden[j] * lr;
+					hiddenWeights[k][j] += training_inputs[x][k] * deltaHidden[j] * lr;
 				}
 			}
-
-			// print final weights after training is done
-
-			fputs("Final Hidden Weights \n", stdout);
-			for(int j = 0; j < numHiddenNodes; j++){
-				fputs("[  ", stdout);
-				for(int k = 0 ; k < numInputs; k++){
-					printf("%f ", hiddenWeights[k][j]);
-				}
-
-				fputs("]  ", stdout);
-			}
-
-			fputs ("\n Final Hidden Biases \n", stdout);
-			for(int j = 0; j < numHiddenNodes; j++){
-				printf("%f", hiddenLayerBias[j]);
-
-			}
-
-
-			fputs("Final Output Weights \n", stdout);
-			for(int j = 0; j < numOutputs; j++){
-				fputs("[  ", stdout);
-				for(int k = 0 ; k < numHiddenNodes; k++){
-					printf("%f ", outputWeights[k][j]);
-				}
-
-				fputs("] n ", stdout);
-			}
-
-			fputs ("\n Final Output Biases \n", stdout);
-			for(int j = 0; j < numOutputs; j++){
-				printf("%f", outputLayerBias[j]);
-			}
-
-			fputs("] n", stdout);
-
-			return 0;
 		}
 	}
+
+	printf("\nFinal Results after %d epochs : \n", numberOfEpochs);
+
+	for(int i = 0;  i < numTrainingSets; i++){
+		// forward passs for display
+
+		for(int j = 0; j < numHiddenNodes; j++){
+			double activation = hiddenLayerBias[j];
+
+			for(int k = 0; k < numInputs; k++){
+				activation += training_inputs[i][k] * hiddenWeights[k][j];
+			}
+
+			hiddenLayer[j] = sigmoid(activation);
+		}
+
+		for(int j = 0; j < numOutputs; j++){
+			double activation = outputLayerBias[j];
+			for(int k = 0; k < numHiddenNodes; k++){
+
+				activation += hiddenLayer[k] * outputWeights[k][j];
+			}
+
+			outputLayer[j] = sigmoid(activation);
+		}
+
+		printf("Input: %g  %g  ->  Output:  %g  (Target:  %g)\n", training_inputs[i][0], training_inputs[i][1], outputLayer[0], training_outputs[i][0]);
+	}
+
+
+	return 0;
+
 }
